@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: documents-postgres
+    environment:
+      POSTGRES_DB: documentsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - documents_postgres_data:/var/lib/postgresql/data
+    networks:
+      - document-lab-network
+
+  mongo:
+    image: mongo:7
+    container_name: processing-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGO_INITDB_DATABASE: processingdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - processing_mongo_data:/data/db
+    networks:
+      - document-lab-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: document-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - document-lab-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: document-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: document-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://document-kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - document-lab-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: document-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8088:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-document-lab
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: document-kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: document-zookeeper:2181
+    networks:
+      - document-lab-network
+
+volumes:
+  documents_postgres_data:
+  processing_mongo_data:
+
+networks:
+  document-lab-network:
+    driver: bridge
