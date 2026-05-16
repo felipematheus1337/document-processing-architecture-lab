@@ -1,9 +1,11 @@
 package org.acme.client;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
 import org.acme.domain.ProcessingEventResponse;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import java.util.List;
 
 @RegisterRestClient(configKey = "processing-service")
 public interface ProcessingServiceClient {
