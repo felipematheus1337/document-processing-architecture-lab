@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import processing_service.v1.domain.enumeration.DocumentProcessingStatus;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,7 @@ public class ProcessingEvent {
     private String title;
     private String ownerName;
     private String fileName;
-    private String status;
+    private DocumentProcessingStatus status;
     private LocalDateTime receivedAt;
     private LocalDateTime processedAt;
     private Integer attempts;
