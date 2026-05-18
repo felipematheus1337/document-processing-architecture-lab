@@ -5,8 +5,11 @@ import document_service.v1.domain.enumeration.DocumentStatus;
 import document_service.v1.dto.CreateDocumentRequest;
 import document_service.v1.dto.DocumentResponse;
 import document_service.v1.exception.BusinessException;
+import document_service.v1.metrics.DocumentMetrics;
 import document_service.v1.producer.DocumentEventProducer;
 import document_service.v1.repository.DocumentRepository;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,8 @@ public class DocumentService {
 
     private final DocumentRepository repository;
     private final DocumentEventProducer producer;
+    private final DocumentMetrics documentMetrics;
+    private final ObservationRegistry observationRegistry;
 
     public  DocumentResponse getById(Long id) {
         var document = repository.findById(id)
@@ -52,8 +57,17 @@ public class DocumentService {
                 .toList();
     }
 
-    @Transactional
+
     public void create(CreateDocumentRequest request) {
+        Observation
+                .createNotStarted("document.create", observationRegistry)
+                .contextualName("create document")
+                .lowCardinalityKeyValue("service", "document-service")
+                .observe(() -> createInternal(request));
+    }
+
+    @Transactional
+    public void createInternal(CreateDocumentRequest request) {
         log.info("event=document_creation_started title={} ownerName={} fileName={}",
                 request.title(),
                 request.ownerName(),
@@ -71,6 +85,9 @@ public class DocumentService {
                 .build();
 
         repository.save(documentToSave);
+
+        documentMetrics.incrementDocumentsCreated(documentToSave.getStatus().name());
+
 
         MDC.put("documentId", String.valueOf(documentToSave.getId()));
 

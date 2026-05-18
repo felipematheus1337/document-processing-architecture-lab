@@ -1,5 +1,7 @@
 package processing_service.v1.service;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -18,14 +20,23 @@ import java.util.Optional;
 public class DocumentProcessingService {
 
     private final DocumentEventRepository repository;
+    private final ObservationRegistry observationRegistry;
 
     public List<ProcessingEvent> getCompleted() {
         log.info("Buscando documentos que estão com status de completo...");
         return repository.findByStatus(DocumentProcessingStatus.COMPLETED);
     }
 
-    @Transactional
     public void persist(ProcessingEvent event) {
+        Observation
+                .createNotStarted("document.process", observationRegistry)
+                .contextualName("process document event")
+                .lowCardinalityKeyValue("service", "processing-service")
+                .observe(() -> persistInternal(event));
+    }
+
+    @Transactional
+    public void persistInternal(ProcessingEvent event) {
         log.info("event=document_processing_started title={} ownerName={} fileName={}",
                 event.getTitle(),
                 event.getOwnerName(),

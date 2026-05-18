@@ -2,6 +2,8 @@ package org.acme.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import io.smallrye.faulttolerance.api.CircuitBreakerName;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -34,6 +36,8 @@ public class ExportJobService {
 
     @Inject
     ObjectMapper objectMapper;
+
+
 
     @Retry(maxRetries = 2, delay = 1000)
     @Timeout(5000)

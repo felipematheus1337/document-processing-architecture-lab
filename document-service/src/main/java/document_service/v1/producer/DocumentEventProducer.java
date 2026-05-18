@@ -4,6 +4,7 @@ import document_service.v1.constants.ConstantsUtils;
 import document_service.v1.domain.DocumentEntity;
 import document_service.v1.domain.enumeration.DocumentStatus;
 import document_service.v1.event.DocumentSubmittedEvent;
+import document_service.v1.metrics.DocumentMetrics;
 import document_service.v1.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class DocumentEventProducer {
 
     private final StreamBridge streamBridge;
     private final DocumentRepository repository;
+    private final DocumentMetrics documentMetrics;
 
     public void publish(DocumentEntity document) {
 
@@ -56,8 +58,10 @@ public class DocumentEventProducer {
                             document.getId());
 
                     document.setStatus(DocumentStatus.FAILED);
+                    documentMetrics.incrementDocumentEventPublishFailed("DocumentSubmittedEvent");
                 }
                 repository.save(document);
+                documentMetrics.incrementDocumentEventPublished("DocumentSubmittedEvent");
 
                 log.info("event=document_event_published binding={} eventType=DocumentSubmittedEvent documentId={}",
                         BINDING_NAME,

@@ -9,6 +9,7 @@ import processing_service.v1.domain.ProcessingEvent;
 import processing_service.v1.domain.enumeration.DocumentProcessingStatus;
 import processing_service.v1.event.DocumentSubmittedEvent;
 import processing_service.v1.exception.BusinessException;
+import processing_service.v1.metrics.ProcessingMetrics;
 import processing_service.v1.service.DocumentProcessingService;
 
 import java.time.LocalDateTime;
@@ -22,11 +23,14 @@ import java.util.function.Consumer;
 public class DocumentProcessorConsumer implements Consumer<Message<DocumentSubmittedEvent>> {
 
     private final DocumentProcessingService service;
+    private final ProcessingMetrics processingMetrics;
 
     @Override
     public void accept(Message<DocumentSubmittedEvent> message) {
         try {
             log.info("Processando evento de persistir documento no MongoDB.");
+
+            processingMetrics.incrementDocumentEventsConsumed("DocumentSubmittedEvent");
 
             DocumentSubmittedEvent submittedEvent = message.getPayload();
 
@@ -66,6 +70,7 @@ public class DocumentProcessorConsumer implements Consumer<Message<DocumentSubmi
                     e.getMessage(),
                     e
             );
+            processingMetrics.incrementDocumentProcessingFailed(e.getClass().getSimpleName());
 
         } finally {
             MDC.remove("correlationId");

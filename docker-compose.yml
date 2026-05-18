@@ -48,16 +48,10 @@ services:
       - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
-
-      # Kafka falando com Zookeeper dentro da rede Docker
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
-      # Dois listeners:
-      # PLAINTEXT      -> usado por containers dentro do Docker Compose
-      # PLAINTEXT_HOST -> usado pela sua máquina/IDE via localhost
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
@@ -75,18 +69,108 @@ services:
       - "8088:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local-document-lab
-
-      # Kafka UI está dentro do Docker, então usa o nome do service Kafka
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-
-      # Opcional. Pode manter, mas usando nome do service
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - document-lab-network
+
+  document-service:
+    build:
+      context: ./document-service
+      dockerfile: Dockerfile
+    container_name: document-service
+    depends_on:
+      - postgres
+      - kafka
+      - jaeger
+    ports:
+      - "8081:8081"
+    environment:
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/documentsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    networks:
+      - document-lab-network
+
+  processing-service:
+    build:
+      context: ./processing-service
+      dockerfile: Dockerfile
+    container_name: processing-service
+    depends_on:
+      - mongo
+      - kafka
+      - jaeger
+    ports:
+      - "8082:8082"
+    environment:
+      MONGO_URI: mongodb://mongo:mongo@mongo:27017/processingdb?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    networks:
+      - document-lab-network
+
+  export-job-service:
+    build:
+      context: ./export-job-service
+      dockerfile: Dockerfile
+    container_name: export-job-service
+    depends_on:
+      - processing-service
+      - jaeger
+    ports:
+      - "8083:8083"
+    environment:
+      PROCESSING_SERVICE_URL: http://processing-service:8082
+      EXPORT_PATH: /app/exports
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://jaeger:4317
+    volumes:
+      - export_files:/app/exports
+    networks:
+      - document-lab-network
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: document-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - document-lab-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: document-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - document-lab-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: document-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
     networks:
       - document-lab-network
 
 volumes:
   documents_postgres_data:
   processing_mongo_data:
+  export_files:
+  grafana_data:
 
 networks:
   document-lab-network:
