@@ -2,7 +2,7 @@ package processing_service.v1.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import processing_service.v1.domain.ProcessingEvent;
@@ -25,8 +25,21 @@ public class DocumentProcessingService {
     }
 
     @Transactional
-    public ProcessingEvent persist(ProcessingEvent event) {
-        return repository.save(event);
+    public void persist(ProcessingEvent event) {
+        log.info("event=document_processing_started title={} ownerName={} fileName={}",
+                event.getTitle(),
+                event.getOwnerName(),
+                event.getFileName()
+        );
+
+        repository.save(event);
+
+        MDC.put("processingEventId", event.getId());
+
+        log.info("event=document_processing_completed status={}",event.getStatus());
+
+        MDC.remove("processingEventId");
+
     }
 
     public Optional<ProcessingEvent> getByDocumentId(Long documentId) {

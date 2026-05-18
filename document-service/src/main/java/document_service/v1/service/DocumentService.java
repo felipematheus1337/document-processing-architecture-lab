@@ -10,6 +10,7 @@ import document_service.v1.repository.DocumentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -53,6 +54,12 @@ public class DocumentService {
 
     @Transactional
     public void create(CreateDocumentRequest request) {
+        log.info("event=document_creation_started title={} ownerName={} fileName={}",
+                request.title(),
+                request.ownerName(),
+                request.fileName()
+        );
+
         var documentToSave = DocumentEntity
                 .builder()
                 .fileName(request.fileName())
@@ -65,12 +72,20 @@ public class DocumentService {
 
         repository.save(documentToSave);
 
+        MDC.put("documentId", String.valueOf(documentToSave.getId()));
+
+        log.info("event=document_persisted status={} title={} ownerName={}",
+                documentToSave.getStatus(),
+                documentToSave.getTitle(),
+                documentToSave.getOwnerName()
+        );
+
         producer.publish(documentToSave);
+
+        log.info("event=document_creation_finished status={}", documentToSave.getStatus());
+
+        MDC.remove("documentId");
+
     }
 
-    @Transactional
-    public void persist(DocumentEntity document) {
-        log.info("Persisting the entity with owner: {}", document.getOwnerName());
-        repository.save(document);
-    }
 }

@@ -2,6 +2,8 @@ package processing_service.v1.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 import processing_service.v1.domain.ProcessingEvent;
 import processing_service.v1.domain.enumeration.DocumentProcessingStatus;
@@ -10,23 +12,23 @@ import processing_service.v1.exception.BusinessException;
 import processing_service.v1.service.DocumentProcessingService;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class DocumentProcessorConsumer implements Consumer<DocumentSubmittedEvent> {
+public class DocumentProcessorConsumer implements Consumer<Message<DocumentSubmittedEvent>> {
 
     private final DocumentProcessingService service;
 
     @Override
-    public void accept(DocumentSubmittedEvent submittedEvent) {
+    public void accept(Message<DocumentSubmittedEvent> message) {
         try {
             log.info("Processando evento de persistir documento no MongoDB.");
 
-            if (submittedEvent == null) {
-                throw new BusinessException();
-            }
+            DocumentSubmittedEvent submittedEvent = message.getPayload();
 
             ProcessingEvent existingProcessingEvent = verifyIfProcessingEventExists(submittedEvent.documentId());
 
@@ -36,6 +38,16 @@ public class DocumentProcessorConsumer implements Consumer<DocumentSubmittedEven
                 checkIdempotenceStatus(existingProcessingEvent);
                 attempts = existingProcessingEvent.getAttempts() + 1;
             }
+
+            String correlationId = Optional
+                    .ofNullable(message.getHeaders().get("correlationId", String.class))
+                    .filter(value -> !value.isBlank())
+                    .orElse(UUID.randomUUID().toString());
+
+            MDC.put("correlationId", correlationId);
+            MDC.put("documentId", String.valueOf(submittedEvent.documentId()));
+
+            log.info("event=document_submitted_event_received topic=document-submitted eventType=DocumentSubmittedEvent");
 
             ProcessingEvent processingEvent = ProcessingEvent
                     .builder()
@@ -47,9 +59,18 @@ public class DocumentProcessorConsumer implements Consumer<DocumentSubmittedEven
 
             service.persist(processingEvent);
 
-        } catch (Exception e) {
-            log.error("Erro ao processar evento de documento: {}", e.getMessage(), e);
+            log.info("event=document_submitted_event_processed status=SUCCESS");
 
+        } catch (Exception e) {
+            log.error("event=document_submitted_event_processing_failed errorMessage={}",
+                    e.getMessage(),
+                    e
+            );
+
+        } finally {
+            MDC.remove("correlationId");
+            MDC.remove("documentId");
+            MDC.remove("processingEventId");
         }
     }
 

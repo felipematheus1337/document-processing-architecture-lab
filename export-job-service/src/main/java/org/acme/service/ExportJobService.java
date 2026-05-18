@@ -40,14 +40,18 @@ public class ExportJobService {
     @CircuitBreaker(requestVolumeThreshold = 4, failureRatio = 0.5, delay = 10000)
     @CircuitBreakerName("processing-service-export")
     public void exportCompletedEvents() {
-        LOG.info("Starting completed processing events export job");
+        long startedAt = System.currentTimeMillis();
+
+        LOG.info("event=export_job_started");
 
         List<ProcessingEventResponse> completedEvents = processingServiceClient.findCompleted();
 
         if (completedEvents == null || completedEvents.isEmpty()) {
-            LOG.info("No completed processing events found to export");
+            LOG.info("event=export_job_finished status=NO_RECORDS recordsCount=0");
             return;
         }
+
+        LOG.infof("event=completed_events_found recordsCount=%d", completedEvents.size());
 
         String fileName = "processing-events-" +
                 LocalDateTime.now().format(FILE_DATE_FORMAT) +
@@ -57,9 +61,14 @@ public class ExportJobService {
 
         Path savedFile = localFileStorageService.save(fileName, content);
 
-        LOG.infof("Exported %d processing events to file: %s",
+        long durationMs = System.currentTimeMillis() - startedAt;
+
+        LOG.infof(
+                "event=export_file_created status=SUCCESS recordsCount=%d fileName=%s exportPath=%s durationMs=%d",
                 completedEvents.size(),
-                savedFile.toAbsolutePath()
+                fileName,
+                savedFile.toAbsolutePath(),
+                durationMs
         );
     }
 

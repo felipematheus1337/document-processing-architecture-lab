@@ -30,3 +30,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} level=%-5level service=${spring.application.name} correlationId=%X{correlationId} documentId=%X{documentId} processingEventId=%X{processingEventId} thread=%thread logger=%logger{36} msg=\"%msg\"%n"
