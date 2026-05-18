@@ -3,7 +3,7 @@ package document_service.v1.producer;
 import document_service.v1.domain.DocumentEntity;
 import document_service.v1.domain.enumeration.DocumentStatus;
 import document_service.v1.event.DocumentSubmittedEvent;
-import document_service.v1.service.DocumentService;
+import document_service.v1.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -19,7 +19,7 @@ public class DocumentEventProducer {
     private static final String BINDING_NAME = "documentSubmitted-out-0";
 
     private final StreamBridge streamBridge;
-    private final DocumentService service;
+    private final DocumentRepository repository;
 
     public void publish(DocumentEntity document) {
 
@@ -39,14 +39,14 @@ public class DocumentEventProducer {
                 } else {
                     document.setStatus(DocumentStatus.FAILED);
                 }
-                service.persist(document);
+                repository.save(document);
             }
 
         } catch (Exception e) {
             log.error(e.getMessage());
             log.error("Failed to publish the message...");
             document.setStatus(DocumentStatus.FAILED);
-            service.persist(document);
+            repository.save(document);
         }
 
     }
