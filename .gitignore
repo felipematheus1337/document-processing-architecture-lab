@@ -41,6 +41,12 @@ terraform.rc
 *.iml
 *.ipr
 
+terraform/terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

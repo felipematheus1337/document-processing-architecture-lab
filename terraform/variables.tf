@@ -37,3 +37,39 @@ variable "my_ip_cidr" {
   description = "Your public IP address in CIDR notation for temporary SSH access"
   type        = string
 }
+
+variable "db_name" {
+  description = "Initial database name for RDS PostgreSQL"
+  type        = string
+}
+
+variable "db_username" {
+  description = "Master username for RDS PostgreSQL"
+  type        = string
+}
+
+variable "db_password" {
+  description = "Master password for RDS PostgreSQL"
+  type        = string
+  sensitive   = true
+}
+
+variable "rds_instance_class" {
+  description = "RDS instance class"
+  type        = string
+}
+
+variable "rds_allocated_storage" {
+  description = "Allocated storage for RDS in GB"
+  type        = number
+}
+
+variable "dynamodb_table_name" {
+  description = "DynamoDB table name for processing events"
+  type        = string
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name for exported processing files"
+  type        = string
+}

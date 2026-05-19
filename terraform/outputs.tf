@@ -52,3 +52,28 @@ output "ssh_security_group_id" {
   description = "SSH security group ID"
   value       = aws_security_group.ssh.id
 }
+
+output "rds_endpoint" {
+  description = "RDS PostgreSQL endpoint"
+  value       = aws_db_instance.postgres.endpoint
+}
+
+output "rds_address" {
+  description = "RDS PostgreSQL address"
+  value       = aws_db_instance.postgres.address
+}
+
+output "rds_port" {
+  description = "RDS PostgreSQL port"
+  value       = aws_db_instance.postgres.port
+}
+
+output "s3_exports_bucket_name" {
+  description = "S3 bucket used by export-job-service"
+  value       = aws_s3_bucket.exports.bucket
+}
+
+output "dynamodb_processing_events_table_name" {
+  description = "DynamoDB processing events table name"
+  value       = aws_dynamodb_table.processing_events.name
+}

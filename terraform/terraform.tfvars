@@ -24,3 +24,12 @@ private_db_subnet_cidrs = [
 ]
 
 my_ip_cidr = "200.152.111.59/32"
+
+db_name               = "documentsdb"
+db_username           = "postgres"
+db_password           = "TroqueEssaSenha123!"
+rds_instance_class    = "db.t4g.micro"
+rds_allocated_storage = 20
+
+dynamodb_table_name = "document-processing-events"
+s3_bucket_name      = "document-processing-lab-exports-poc-lipe-202605"
