@@ -32,3 +32,8 @@ variable "availability_zones" {
   description = "Availability zones used by the project"
   type        = list(string)
 }
+
+variable "my_ip_cidr" {
+  description = "Your public IP address in CIDR notation for temporary SSH access"
+  type        = string
+}

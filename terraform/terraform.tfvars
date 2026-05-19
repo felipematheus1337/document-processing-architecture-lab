@@ -23,3 +23,4 @@ private_db_subnet_cidrs = [
   "10.0.22.0/24"
 ]
 
+my_ip_cidr = "200.152.111.59/32"

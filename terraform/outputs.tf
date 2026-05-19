@@ -27,3 +27,28 @@ output "nat_gateway_id" {
   description = "NAT Gateway ID"
   value       = aws_nat_gateway.main.id
 }
+
+output "alb_security_group_id" {
+  description = "ALB security group ID"
+  value       = aws_security_group.alb.id
+}
+
+output "app_security_group_id" {
+  description = "Application security group ID"
+  value       = aws_security_group.app.id
+}
+
+output "kafka_security_group_id" {
+  description = "Kafka security group ID"
+  value       = aws_security_group.kafka.id
+}
+
+output "rds_security_group_id" {
+  description = "RDS security group ID"
+  value       = aws_security_group.rds.id
+}
+
+output "ssh_security_group_id" {
+  description = "SSH security group ID"
+  value       = aws_security_group.ssh.id
+}
