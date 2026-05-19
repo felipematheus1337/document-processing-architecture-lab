@@ -77,3 +77,33 @@ output "dynamodb_processing_events_table_name" {
   description = "DynamoDB processing events table name"
   value       = aws_dynamodb_table.processing_events.name
 }
+
+output "bastion_public_ip" {
+  description = "Public IP address of the bastion host"
+  value       = aws_instance.bastion.public_ip
+}
+
+output "document_service_private_ip" {
+  description = "Private IP of document-service EC2"
+  value       = aws_instance.document_service.private_ip
+}
+
+output "processing_service_private_ip" {
+  description = "Private IP of processing-service EC2"
+  value       = aws_instance.processing_service.private_ip
+}
+
+output "export_job_service_private_ip" {
+  description = "Private IP of export-job-service EC2"
+  value       = aws_instance.export_job_service.private_ip
+}
+
+output "kafka_private_ip" {
+  description = "Private IP of Kafka EC2"
+  value       = aws_instance.kafka.private_ip
+}
+
+output "alb_dns_name" {
+  description = "Public DNS name of the Application Load Balancer"
+  value       = aws_lb.main.dns_name
+}

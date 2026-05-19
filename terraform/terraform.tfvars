@@ -33,3 +33,9 @@ rds_allocated_storage = 20
 
 dynamodb_table_name = "document-processing-events"
 s3_bucket_name      = "document-processing-lab-exports-poc-lipe-202605"
+
+ec2_instance_type     = "t3.micro"
+kafka_instance_type   = "t3.micro"
+bastion_instance_type = "t3.micro"
+
+key_pair_name = "document-processing-lab-key"

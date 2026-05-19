@@ -32,7 +32,7 @@ public class ExportJobService {
     ProcessingServiceClient processingServiceClient;
 
     @Inject
-    LocalFileStorageService localFileStorageService;
+    StorageServiceResolver storageServiceResolver;
 
     @Inject
     ObjectMapper objectMapper;
@@ -63,7 +63,7 @@ public class ExportJobService {
 
         String content = toJson(completedEvents);
 
-        Path savedFile = localFileStorageService.save(fileName, content);
+        String storageLocation = storageServiceResolver.save(fileName, content);
 
         long durationMs = System.currentTimeMillis() - startedAt;
 
@@ -71,7 +71,7 @@ public class ExportJobService {
                 "event=export_file_created status=SUCCESS recordsCount=%d fileName=%s exportPath=%s durationMs=%d",
                 completedEvents.size(),
                 fileName,
-                savedFile.toAbsolutePath(),
+               storageLocation,
                 durationMs
         );
     }

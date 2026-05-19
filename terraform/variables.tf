@@ -73,3 +73,22 @@ variable "s3_bucket_name" {
   description = "S3 bucket name for exported processing files"
   type        = string
 }
+variable "ec2_instance_type" {
+  description = "Instance type used by application EC2 instances"
+  type        = string
+}
+
+variable "kafka_instance_type" {
+  description = "Instance type used by Kafka EC2 instance"
+  type        = string
+}
+
+variable "bastion_instance_type" {
+  description = "Instance type used by bastion EC2 instance"
+  type        = string
+}
+
+variable "key_pair_name" {
+  description = "Name of the AWS EC2 Key Pair used for SSH"
+  type        = string
+}
